@@ -1,0 +1,154 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/atlas/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/atlas/interview/007> a ex:Interview ;
+    dcterms:date "2027-07-14"^^xsd:date ;
+    dcterms:language "tr" ;
+    ex:mentions <https://example.org/atlas/pasture/tr-01>,
+        <https://example.org/atlas/pasture/tr-03> .
+
+<https://example.org/atlas/interview/012> a ex:Interview ;
+    dcterms:date "2027-08-03"^^xsd:date ;
+    dcterms:language "ky" ;
+    ex:mentions <https://example.org/atlas/pasture/kg-01>,
+        <https://example.org/atlas/pasture/kg-02> .
+
+<https://example.org/atlas/move/Q2712698-1985> a ex:SeasonalMove ;
+    ex:region wd:Q2712698 ;
+    ex:timing "early June"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 1985 .
+
+<https://example.org/atlas/move/Q2712698-2005> a ex:SeasonalMove ;
+    ex:region wd:Q2712698 ;
+    ex:timing "late May"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 2005 .
+
+<https://example.org/atlas/move/Q2712698-2025> a ex:SeasonalMove ;
+    ex:region wd:Q2712698 ;
+    ex:timing "mid May"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 2025 .
+
+<https://example.org/atlas/move/Q486375-1985> a ex:SeasonalMove ;
+    ex:region wd:Q486375 ;
+    ex:timing "mid June"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 1985 .
+
+<https://example.org/atlas/move/Q486375-2005> a ex:SeasonalMove ;
+    ex:region wd:Q486375 ;
+    ex:timing "early June"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 2005 .
+
+<https://example.org/atlas/move/Q486375-2025> a ex:SeasonalMove ;
+    ex:region wd:Q486375 ;
+    ex:timing "late May"@en ;
+    ex:toSeason <https://example.org/atlas/season/summer> ;
+    ex:year 2025 .
+
+<https://example.org/atlas/pasture/kg-03> a ex:Pasture ;
+    rdfs:label "Spring pasture 2"@en,
+        "Жаздоо 2"@ky ;
+    geo:hasGeometry <https://example.org/atlas/geometry/kg-03> ;
+    ex:locatedIn wd:Q486375 ;
+    ex:pastureType <https://example.org/atlas/type/spring-pasture> ;
+    ex:usedIn <https://example.org/atlas/season/spring> .
+
+<https://example.org/atlas/pasture/tr-02> a ex:Pasture ;
+    rdfs:label "Winter quarters 1"@en,
+        "Örnek kışlak 1"@tr ;
+    geo:hasGeometry <https://example.org/atlas/geometry/tr-02> ;
+    ex:locatedIn wd:Q2712698 ;
+    ex:pastureType <https://example.org/atlas/type/winter-quarters> ;
+    ex:usedIn <https://example.org/atlas/season/winter> .
+
+<https://example.org/atlas/geometry/kg-01> geo:asWKT "POINT(75.90 41.40)"^^geo:wktLiteral .
+
+<https://example.org/atlas/geometry/kg-02> geo:asWKT "POINT(75.70 41.20)"^^geo:wktLiteral .
+
+<https://example.org/atlas/geometry/kg-03> geo:asWKT "POINT(75.95 41.28)"^^geo:wktLiteral .
+
+<https://example.org/atlas/geometry/tr-01> geo:asWKT "POINT(41.30 40.95)"^^geo:wktLiteral .
+
+<https://example.org/atlas/geometry/tr-02> geo:asWKT "POINT(41.15 41.25)"^^geo:wktLiteral .
+
+<https://example.org/atlas/geometry/tr-03> geo:asWKT "POINT(41.28 41.10)"^^geo:wktLiteral .
+
+<https://example.org/atlas/pasture/kg-01> a ex:Pasture ;
+    rdfs:label "Summer pasture 2"@en,
+        "Жайлоо 2"@ky ;
+    geo:hasGeometry <https://example.org/atlas/geometry/kg-01> ;
+    ex:locatedIn wd:Q486375 ;
+    ex:pastureType <https://example.org/atlas/type/summer-pasture> ;
+    ex:usedIn <https://example.org/atlas/season/summer> .
+
+<https://example.org/atlas/pasture/kg-02> a ex:Pasture ;
+    rdfs:label "Winter quarters 2"@en,
+        "Кыштоо 2"@ky ;
+    geo:hasGeometry <https://example.org/atlas/geometry/kg-02> ;
+    ex:locatedIn wd:Q486375 ;
+    ex:pastureType <https://example.org/atlas/type/winter-quarters> ;
+    ex:usedIn <https://example.org/atlas/season/winter> .
+
+<https://example.org/atlas/pasture/tr-01> a ex:Pasture ;
+    rdfs:label "Summer pasture 1"@en,
+        "Örnek yayla 1"@tr ;
+    geo:hasGeometry <https://example.org/atlas/geometry/tr-01> ;
+    ex:locatedIn wd:Q2712698 ;
+    ex:pastureType <https://example.org/atlas/type/summer-pasture> ;
+    ex:usedIn <https://example.org/atlas/season/summer> .
+
+<https://example.org/atlas/pasture/tr-03> a ex:Pasture ;
+    rdfs:label "Spring pasture 1"@en,
+        "Örnek ilkbahar otlağı 1"@tr ;
+    geo:hasGeometry <https://example.org/atlas/geometry/tr-03> ;
+    ex:locatedIn wd:Q2712698 ;
+    ex:pastureType <https://example.org/atlas/type/spring-pasture> ;
+    ex:usedIn <https://example.org/atlas/season/spring> .
+
+<https://example.org/atlas/season/spring> a skos:Concept ;
+    skos:inScheme ex:seasons ;
+    skos:prefLabel "Spring"@en,
+        "Жаз"@ky,
+        "İlkbahar"@tr ;
+    ex:order 2 .
+
+<https://example.org/atlas/season/winter> a skos:Concept ;
+    skos:inScheme ex:seasons ;
+    skos:prefLabel "Winter"@en,
+        "Кыш"@ky,
+        "Kış"@tr ;
+    ex:order 1 .
+
+<https://example.org/atlas/type/spring-pasture> a skos:Concept ;
+    skos:inScheme ex:pastureTypes ;
+    skos:prefLabel "Spring pasture"@en,
+        "жаздоо"@ky .
+
+<https://example.org/atlas/type/summer-pasture> a skos:Concept ;
+    skos:inScheme ex:pastureTypes ;
+    skos:prefLabel "Summer pasture"@en,
+        "жайлоо"@ky,
+        "yayla"@tr .
+
+<https://example.org/atlas/type/winter-quarters> a skos:Concept ;
+    skos:inScheme ex:pastureTypes ;
+    skos:prefLabel "Winter quarters"@en,
+        "кыштоо"@ky,
+        "kışlak"@tr .
+
+<https://example.org/atlas/season/summer> a skos:Concept ;
+    skos:inScheme ex:seasons ;
+    skos:prefLabel "Summer"@en,
+        "Жай"@ky,
+        "Yaz"@tr ;
+    ex:order 3 .
+

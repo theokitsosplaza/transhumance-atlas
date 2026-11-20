@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transhumance atlas prototype</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2933; }
+  #page { display: flex; height: 100vh; }
+  #sidebar { width: 360px; padding: 18px 18px 12px; overflow-y: auto; border-right: 1px solid #d9dee3; background: #fafbfc; }
+  #map { flex: 1; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .subtitle { font-size: 13px; color: #5f6b76; margin: 0 0 14px; line-height: 1.4; }
+  .demo_badge { display: inline-block; font-size: 11px; font-weight: 600; color: #8a5a00; background: #fff4dc; border: 1px solid #f0d8a8; border-radius: 3px; padding: 1px 6px; margin-bottom: 8px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #5f6b76; margin: 18px 0 8px; }
+  .button_row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .button_row button { border: 1px solid #c3cbd3; background: white; border-radius: 4px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+  .button_row button.active { background: #1f5f8b; border-color: #1f5f8b; color: white; }
+  #search_box { width: 100%; padding: 7px 9px; border: 1px solid #c3cbd3; border-radius: 4px; font-size: 14px; }
+  #search_results { margin-top: 6px; }
+  .hint { font-size: 12px; color: #6b7680; margin-top: 4px; }
+  .list_item { padding: 7px 10px; border: 1px solid #d9dee3; border-radius: 4px; background: white; margin-bottom: 6px; cursor: pointer; font-size: 14px; }
+  .list_item:hover { border-color: #1f5f8b; }
+  .list_item small { display: block; color: #5f6b76; margin-top: 2px; }
+  .list_item.not_in_use { color: #8a949e; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend { font-size: 13px; color: #3e4a55; }
+  .legend div { margin-bottom: 5px; }
+  .legend small { color: #6b7680; }
+  .line_sample { display: inline-block; width: 22px; border-top: 3px solid #1f5f8b; margin-right: 6px; vertical-align: middle; }
+  .line_sample.dashed { border-top-style: dashed; }
+  .timing_table { font-size: 13px; border-collapse: collapse; width: 100%; }
+  .timing_table td { padding: 3px 0; }
+  .timing_table td:last-child { text-align: right; font-weight: 600; }
+  .note { font-size: 12px; color: #6b7680; line-height: 1.45; }
+  .panel { font-size: 13px; line-height: 1.5; background: white; border: 1px solid #d9dee3; border-radius: 4px; padding: 10px; }
+  .panel button { margin-top: 8px; border: 1px solid #1f5f8b; color: #1f5f8b; background: white; border-radius: 4px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+  .popup_title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .popup_table { border-collapse: collapse; font-size: 13px; }
+  .popup_table td { padding: 2px 8px 2px 0; vertical-align: top; }
+  .popup_table td:first-child { color: #5f6b76; white-space: nowrap; }
+  .lang_tag { font-size: 11px; color: #5f6b76; background: #eef1f4; border-radius: 3px; padding: 0 4px; margin-left: 3px; }
+  .closed { color: #8a5a00; font-size: 12px; }
+  .warning { color: #a33; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="page">
+  <div id="sidebar">
+    <h1>Transhumance atlas</h1>
+    <div class="demo_badge">Prototype · made-up demo data</div>
+    <p class="subtitle">Seasonal pastures and herding routes in Fındıklı (Türkiye) and Naryn (Kyrgyzstan).</p>
+
+    <h2>Search any spelling</h2>
+    <input id="search_box" type="text" placeholder="e.g. Findikli, Нарын, yayla, jailoo">
+    <div class="hint">Matches Turkish letters without accents and Cyrillic in Latin letters.</div>
+    <div id="search_results"></div>
+
+    <h2>Label language</h2>
+    <div class="button_row" id="language_buttons"></div>
+
+    <h2>Year</h2>
+    <div class="button_row" id="year_buttons"></div>
+
+    <h2>Move up to the summer pastures</h2>
+    <table class="timing_table" id="timing_table"></table>
+    <div class="note">Invented values, only to show how change over time could be displayed. Not findings.</div>
+
+    <h2>Regions</h2>
+    <div id="region_list"></div>
+
+    <h2>Pastures</h2>
+    <div id="pasture_list"></div>
+
+    <h2>Interviews</h2>
+    <div id="interview_list"></div>
+
+    <h2>Legend</h2>
+    <div class="legend" id="legend"></div>
+
+    <h2>Data</h2>
+    <div class="panel">
+      Every pasture has one ID and several names, each tagged with its language. Pasture types and seasons come from a small shared vocabulary, so <i>yayla</i>, <i>жайлоо</i> and <i>summer pasture</i> are one concept. Regions point to their Wikidata IDs.<br><br>
+      Interviews are shown only by their description (date, language, places mentioned). Recordings stay closed.<br><br>
+      Source: demo RDF graph (Turtle), converted to this page with a Python script.<br>
+      Licence of the demo data: CC BY 4.0.
+      <br><a href="pastures.ttl" download><button>Download the linked data (.ttl)</button></a>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const atlas_data = {
+ "pastures": [
+  {
+   "id": "kg-01",
+   "type": "summer-pasture",
+   "seasons": [
+    "summer"
+   ],
+   "region": "Q486375",
+   "lat": 41.4,
+   "lon": 75.9,
+   "in_use_until": null,
+   "labels": {
+    "en": "Summer pasture 2",
+    "ky": "Жайлоо 2"
+   }
+  },
+  {
+   "id": "kg-02",
+   "type": "winter-quarters",
+   "seasons": [
+    "winter"
+   ],
+   "region": "Q486375",
+   "lat": 41.2,
+   "lon": 75.7,
+   "in_use_until": null,
+   "labels": {
+    "en": "Winter quarters 2",
+    "ky": "Кыштоо 2"
+   }
+  },
+  {
+   "id": "kg-03",
+   "type": "spring-pasture",
+   "seasons": [
+    "spring"
+   ],
+   "region": "Q486375",
+   "lat": 41.28,
+   "lon": 75.95,
+   "in_use_until": null,
+   "labels": {
+    "en": "Spring pasture 2",
+    "ky": "Жаздоо 2"
+   }
+  },
+  {
+   "id": "tr-01",
+   "type": "summer-pasture",
+   "seasons": [
+    "summer"
+   ],
+   "region": "Q2712698",
+   "lat": 40.95,
+   "lon": 41.3,
+   "in_use_until": null,
+   "labels": {
+    "en": "Summer pasture 1",
+    "tr": "Örnek yayla 1"
+   }
+  },
+  {
+   "id": "tr-02",
+   "type": "winter-quarters",
+   "seasons": [
+    "winter"
+   ],
+   "region": "Q2712698",
+   "lat": 41.25,
+   "lon": 41.15,
+   "in_use_until": null,
+   "labels": {
+    "en": "Winter quarters 1",
+    "tr": "Örnek kışlak 1"
+   }
+  },
+  {
+   "id": "tr-03",
+   "type": "spring-pasture",
+   "seasons": [
+    "spring"
+   ],
+   "region": "Q2712698",
+   "lat": 41.1,
+   "lon": 41.28,
+   "in_use_until": null,
+   "labels": {
+    "en": "Spring pasture 1",
+    "tr": "Örnek ilkbahar otlağı 1"
+   }
+  }
+ ],
+ "interviews": [
+  {
+   "id": "interview 007",
+   "date": "2027-07-14",
+   "language": "tr",
+   "mentions": [
+    "tr-01",
+    "tr-03"
+   ]
+  },
+  {
+   "id": "interview 012",
+   "date": "2027-08-03",
+   "language": "ky",
+   "mentions": [
+    "kg-01",
+    "kg-02"
+   ]
+  }
+ ],
+ "regions": [
+  {
+   "id": "Q2712698",
+   "labels": {
+    "en": "Fındıklı district",
+    "tr": "Fındıklı ilçesi"
+   },
+   "bounds": [
+    [
+     40.85,
+     40.95
+    ],
+    [
+     41.35,
+     41.45
+    ]
+   ]
+  },
+  {
+   "id": "Q486375",
+   "labels": {
+    "en": "Naryn Region",
+    "ky": "Нарын облусу"
+   },
+   "bounds": [
+    [
+     41.05,
+     75.4
+    ],
+    [
+     41.55,
+     76.15
+    ]
+   ]
+  }
+ ],
+ "season_labels": {
+  "spring": {
+   "en": "Spring",
+   "ky": "Жаз",
+   "tr": "İlkbahar"
+  },
+  "winter": {
+   "en": "Winter",
+   "ky": "Кыш",
+   "tr": "Kış"
+  },
+  "summer": {
+   "en": "Summer",
+   "ky": "Жай",
+   "tr": "Yaz"
+  }
+ },
+ "season_order": {
+  "spring": 2,
+  "winter": 1,
+  "summer": 3
+ },
+ "type_labels": {
+  "spring-pasture": {
+   "en": "Spring pasture",
+   "ky": "жаздоо"
+  },
+  "summer-pasture": {
+   "en": "Summer pasture",
+   "ky": "жайлоо",
+   "tr": "yayla"
+  },
+  "winter-quarters": {
+   "en": "Winter quarters",
+   "ky": "кыштоо",
+   "tr": "kışlak"
+  }
+ },
+ "summer_move_timing": {
+  "Q2712698": {
+   "1985": "early June",
+   "2005": "late May",
+   "2025": "mid May"
+  },
+  "Q486375": {
+   "1985": "mid June",
+   "2005": "early June",
+   "2025": "late May"
+  }
+ }
+};
+
+const type_colors = {
+  "winter-quarters": "#8c5a2b",
+  "spring-pasture": "#8bbf3f",
+  "summer-pasture": "#2f8f4e"
+};
+const language_names = { en: "English", tr: "Türkçe", ky: "Кыргызча" };
+const years = [1985, 2005, 2025];
+
+let chosen_language = "en";
+let chosen_year = 2025;
+
+const map = L.map("map").setView([41.2, 58.5], 4);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18,
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+function label_in_chosen_language(labels_by_language) {
+  if (labels_by_language[chosen_language]) {
+    return labels_by_language[chosen_language];
+  }
+  // fall back to English, then to whatever local name exists
+  return labels_by_language.en || Object.values(labels_by_language)[0];
+}
+
+function tagged_labels_html(labels_by_language) {
+  let html = "";
+  for (const language of Object.keys(labels_by_language)) {
+    html += labels_by_language[language] + '<span class="lang_tag">@' + language + "</span><br>";
+  }
+  return html;
+}
+
+function pasture_by_id(pasture_id) {
+  return atlas_data.pastures.find(pasture => pasture.id === pasture_id);
+}
+
+function region_by_id(region_id) {
+  return atlas_data.regions.find(region => region.id === region_id);
+}
+
+function is_in_use(pasture, year) {
+  return pasture.in_use_until === null || year <= pasture.in_use_until;
+}
+
+function interviews_mentioning(pasture_id) {
+  return atlas_data.interviews.filter(interview => interview.mentions.includes(pasture_id));
+}
+
+const cyrillic_to_latin = {
+  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo", "ж": "j", "з": "z", "и": "i",
+  "й": "i", "к": "k", "л": "l", "м": "m", "н": "n", "ң": "ng", "о": "o", "ө": "o", "п": "p", "р": "r",
+  "с": "s", "т": "t", "у": "u", "ү": "u", "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sh",
+  "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya"
+};
+
+function normalize_for_search(text) {
+  // Turkish dotless ı and dotted İ would otherwise never match a plain i
+  let lowered = text.toLowerCase().replace(/ı/g, "i");
+  lowered = lowered.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  let latin = "";
+  for (const character of lowered) {
+    latin += cyrillic_to_latin[character] !== undefined ? cyrillic_to_latin[character] : character;
+  }
+  return latin;
+}
+
+function popup_html(pasture) {
+  const region = region_by_id(pasture.region);
+  const season_names = pasture.seasons.map(season_id => label_in_chosen_language(atlas_data.season_labels[season_id]));
+  let interviews_html = "";
+  const linked_interviews = interviews_mentioning(pasture.id);
+  for (const interview of linked_interviews) {
+    interviews_html += interview.id + " (" + interview.date + ", " + language_names[interview.language] + ')<br><span class="closed">recording closed, description only</span><br>';
+  }
+  if (linked_interviews.length === 0) {
+    interviews_html = "none yet";
+  }
+  let status_html = "in use";
+  if (!is_in_use(pasture, chosen_year)) {
+    status_html = '<span class="warning">not in use in ' + chosen_year + " (used until " + pasture.in_use_until + ")</span>";
+  } else if (pasture.in_use_until !== null) {
+    status_html = "in use (abandoned after " + pasture.in_use_until + ")";
+  }
+  return '<div class="popup_title">' + label_in_chosen_language(pasture.labels) + "</div>" +
+    '<table class="popup_table">' +
+    "<tr><td>ID</td><td>" + pasture.id + "</td></tr>" +
+    "<tr><td>Names</td><td>" + tagged_labels_html(pasture.labels) + "</td></tr>" +
+    "<tr><td>Type</td><td>" + tagged_labels_html(atlas_data.type_labels[pasture.type]) + "</td></tr>" +
+    "<tr><td>Used in</td><td>" + season_names.join(", ") + "</td></tr>" +
+    "<tr><td>Status " + chosen_year + "</td><td>" + status_html + "</td></tr>" +
+    (pasture.seasons.includes("summer") ? "<tr><td>Move up " + chosen_year + "</td><td>" + atlas_data.summer_move_timing[pasture.region][chosen_year] + " (invented)</td></tr>" : "") +
+    '<tr><td>Region</td><td><a href="https://www.wikidata.org/wiki/' + region.id + '" target="_blank">' +
+      label_in_chosen_language(region.labels) + " (" + region.id + ")</a></td></tr>" +
+    "<tr><td>Location</td><td>" + pasture.lat.toFixed(2) + ", " + pasture.lon.toFixed(2) + "</td></tr>" +
+    "<tr><td>Interviews</td><td>" + interviews_html + "</td></tr>" +
+    "</table>";
+}
+
+const markers_by_pasture_id = {};
+for (const pasture of atlas_data.pastures) {
+  const marker = L.circleMarker([pasture.lat, pasture.lon], { radius: 9, weight: 2 });
+  marker.bindPopup(() => popup_html(pasture), { maxWidth: 340 });
+  marker.bindTooltip(() => label_in_chosen_language(pasture.labels));
+  marker.addTo(map);
+  markers_by_pasture_id[pasture.id] = marker;
+}
+
+const route_layer = L.layerGroup().addTo(map);
+
+function draw_routes() {
+  route_layer.clearLayers();
+  const seasons_in_order = Object.keys(atlas_data.season_order).sort((a, b) => atlas_data.season_order[a] - atlas_data.season_order[b]);
+  for (const region of atlas_data.regions) {
+    const stops = [];
+    for (const season_id of seasons_in_order) {
+      const pasture_for_season = atlas_data.pastures.find(pasture =>
+        pasture.region === region.id && pasture.seasons.includes(season_id) && is_in_use(pasture, chosen_year));
+      if (pasture_for_season) {
+        stops.push({ pasture: pasture_for_season, season: season_id });
+      }
+    }
+    // the yearly loop ends where it started, back at the winter quarters
+    stops.push(stops[0]);
+    for (let stop_index = 0; stop_index < stops.length - 1; stop_index++) {
+      const from_stop = stops[stop_index];
+      const to_stop = stops[stop_index + 1];
+      const going_down = atlas_data.season_order[to_stop.season] <= atlas_data.season_order[from_stop.season];
+      // shift the way down slightly sideways, so it doesn't hide under the way up when both use the same stations
+      let shift_lat = 0;
+      let shift_lon = 0;
+      if (going_down) {
+        const delta_lat = to_stop.pasture.lat - from_stop.pasture.lat;
+        const delta_lon = to_stop.pasture.lon - from_stop.pasture.lon;
+        const length = Math.sqrt(delta_lat * delta_lat + delta_lon * delta_lon);
+        shift_lat = -delta_lon / length * 0.012;
+        shift_lon = delta_lat / length * 0.012;
+      }
+      const line = L.polyline([
+        [from_stop.pasture.lat + shift_lat, from_stop.pasture.lon + shift_lon],
+        [to_stop.pasture.lat + shift_lat, to_stop.pasture.lon + shift_lon]
+      ], {
+        color: "#1f5f8b", weight: 3, opacity: 0.8, dashArray: going_down ? "7 6" : null
+      });
+      line.bindTooltip(label_in_chosen_language(atlas_data.season_labels[to_stop.season]) + ": " +
+        label_in_chosen_language(from_stop.pasture.labels) + " → " + label_in_chosen_language(to_stop.pasture.labels));
+      route_layer.addLayer(line);
+    }
+  }
+}
+
+function fly_to_pasture(pasture_id) {
+  const pasture = pasture_by_id(pasture_id);
+  map.flyTo([pasture.lat, pasture.lon], 10, { duration: 1.2 });
+  map.once("moveend", () => markers_by_pasture_id[pasture_id].openPopup());
+}
+
+function list_item(html, extra_class, on_click) {
+  const item = document.createElement("div");
+  item.className = "list_item " + extra_class;
+  item.innerHTML = html;
+  item.onclick = on_click;
+  return item;
+}
+
+function draw_everything() {
+  for (const pasture of atlas_data.pastures) {
+    const in_use = is_in_use(pasture, chosen_year);
+    markers_by_pasture_id[pasture.id].setStyle({
+      color: in_use ? "white" : type_colors[pasture.type],
+      fillColor: in_use ? type_colors[pasture.type] : "white",
+      fillOpacity: in_use ? 0.95 : 0.6,
+      dashArray: in_use ? null : "3 3"
+    });
+  }
+  draw_routes();
+
+  const pasture_list = document.getElementById("pasture_list");
+  pasture_list.innerHTML = "";
+  for (const pasture of atlas_data.pastures) {
+    const in_use = is_in_use(pasture, chosen_year);
+    const html = '<span class="dot" style="background:' + type_colors[pasture.type] + '"></span>' +
+      label_in_chosen_language(pasture.labels) + "<small>" +
+      label_in_chosen_language(atlas_data.type_labels[pasture.type]) + " · " +
+      label_in_chosen_language(region_by_id(pasture.region).labels) +
+      (in_use ? "" : " · not in use in " + chosen_year) + "</small>";
+    pasture_list.appendChild(list_item(html, in_use ? "" : "not_in_use", () => fly_to_pasture(pasture.id)));
+  }
+
+  const interview_list = document.getElementById("interview_list");
+  interview_list.innerHTML = "";
+  for (const interview of atlas_data.interviews) {
+    const mentioned_names = interview.mentions.map(pasture_id => label_in_chosen_language(pasture_by_id(pasture_id).labels));
+    const html = interview.id + " · " + language_names[interview.language] +
+      "<small>" + interview.date + " · mentions " + mentioned_names.join(", ") + "</small>";
+    interview_list.appendChild(list_item(html, "", () => fly_to_pasture(interview.mentions[0])));
+  }
+
+  const region_list = document.getElementById("region_list");
+  region_list.innerHTML = "";
+  for (const region of atlas_data.regions) {
+    region_list.appendChild(list_item(label_in_chosen_language(region.labels) + " (" + region.id + ")", "",
+      () => map.flyToBounds(region.bounds, { duration: 1.2 })));
+  }
+
+  const timing_table = document.getElementById("timing_table");
+  timing_table.innerHTML = "";
+  for (const region of atlas_data.regions) {
+    timing_table.innerHTML += "<tr><td>" + label_in_chosen_language(region.labels) + ", " + chosen_year + "</td><td>" +
+      atlas_data.summer_move_timing[region.id][chosen_year] + "</td></tr>";
+  }
+
+  const legend = document.getElementById("legend");
+  legend.innerHTML = "";
+  for (const type_id of Object.keys(type_colors)) {
+    const labels = atlas_data.type_labels[type_id];
+    const local_words = Object.keys(labels).filter(language => language !== "en").map(language => labels[language]).join(", ");
+    legend.innerHTML += '<div><span class="dot" style="background:' + type_colors[type_id] + '"></span>' +
+      labels.en + (local_words ? " <small>(" + local_words + ")</small>" : "") + "</div>";
+  }
+  if (atlas_data.pastures.some(pasture => pasture.in_use_until !== null)) {
+    legend.innerHTML += '<div><span class="dot" style="background:white;border:2px dashed #8a949e;width:10px;height:10px"></span>Not in use in the chosen year</div>';
+  }
+  legend.innerHTML += '<div><span class="line_sample"></span>Moving up (to the spring and summer pastures)</div>';
+  legend.innerHTML += '<div><span class="line_sample dashed"></span>Moving down (back to the winter quarters)</div>';
+
+  update_search_results();
+  map.closePopup();
+}
+
+function update_search_results() {
+  const search_results = document.getElementById("search_results");
+  search_results.innerHTML = "";
+  const query = normalize_for_search(document.getElementById("search_box").value.trim());
+  if (query.length < 2) {
+    return;
+  }
+  for (const region of atlas_data.regions) {
+    if (Object.values(region.labels).some(label => normalize_for_search(label).includes(query))) {
+      search_results.appendChild(list_item("Region: " + label_in_chosen_language(region.labels), "",
+        () => map.flyToBounds(region.bounds, { duration: 1.2 })));
+    }
+  }
+  for (const pasture of atlas_data.pastures) {
+    const all_words = Object.values(pasture.labels).concat(Object.values(atlas_data.type_labels[pasture.type]));
+    if (all_words.some(word => normalize_for_search(word).includes(query))) {
+      search_results.appendChild(list_item(label_in_chosen_language(pasture.labels) + "<small>" +
+        Object.values(pasture.labels).join(" · ") + "</small>", "", () => fly_to_pasture(pasture.id)));
+    }
+  }
+  if (search_results.innerHTML === "") {
+    search_results.innerHTML = '<div class="hint">No match.</div>';
+  }
+}
+
+function make_buttons(container_id, options, get_current, set_current) {
+  const container = document.getElementById(container_id);
+  container.innerHTML = "";
+  for (const [value, text] of options) {
+    const button = document.createElement("button");
+    button.textContent = text;
+    if (get_current() === value) {
+      button.className = "active";
+    }
+    button.onclick = () => {
+      set_current(value);
+      make_buttons(container_id, options, get_current, set_current);
+      draw_everything();
+    };
+    container.appendChild(button);
+  }
+}
+
+document.getElementById("search_box").addEventListener("input", update_search_results);
+
+make_buttons("language_buttons", [["en", "English"], ["tr", "Türkçe"], ["ky", "Кыргызча"]],
+  () => chosen_language, value => { chosen_language = value; });
+make_buttons("year_buttons", years.map(year => [year, String(year)]),
+  () => chosen_year, value => { chosen_year = value; });
+draw_everything();
+</script>
+</body>
+</html>

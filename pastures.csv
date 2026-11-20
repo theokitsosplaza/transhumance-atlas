@@ -1,0 +1,7 @@
+pasture_id,name_en,name_local,local_language,region_wikidata_id,latitude,longitude,pasture_type,seasons_used,in_use_until
+tr-01,Summer pasture 1,Örnek yayla 1,tr,Q2712698,40.95,41.30,summer-pasture,summer,
+tr-02,Winter quarters 1,Örnek kışlak 1,tr,Q2712698,41.25,41.15,winter-quarters,winter,
+tr-03,Spring pasture 1,Örnek ilkbahar otlağı 1,tr,Q2712698,41.10,41.28,spring-pasture,spring,
+kg-01,Summer pasture 2,Жайлоо 2,ky,Q486375,41.40,75.90,summer-pasture,summer,
+kg-02,Winter quarters 2,Кыштоо 2,ky,Q486375,41.20,75.70,winter-quarters,winter,
+kg-03,Spring pasture 2,Жаздоо 2,ky,Q486375,41.28,75.95,spring-pasture,spring,
